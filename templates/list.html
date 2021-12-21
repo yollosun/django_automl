@@ -1,0 +1,86 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+{#    <script src="{% static 'js/plotly-2.6.3.min.js' %}"></script>#}
+     <script src="https://cdn.plot.ly/plotly-2.6.3.min.js"></script>
+</head>
+<body>
+<div id="plot"></div>
+<div id="myDiv"></div>
+    <script>
+        var data = [
+  {
+    x: ['giraffes', 'orangutans', 'monkeys'],
+    y: [20, 14, 23],
+    type: 'bar'
+  }
+];
+
+Plotly.newPlot('myDiv', data);
+    {#let data = {{df | safe}}#}
+{#       {{ df|safe }}['type'] = "{{ typegraph }}"#}
+{#        {% for key, value in df.items %}#}
+{#            data["{{key}}"] =  [{% for i in value %} {{ i }} ,{% endfor %}]#}
+{#{% if i|get_type == "str" %}"{{ i }}"{% else %}{{ i }}{% endif %}#}
+{#   {% endfor %}#}
+{#        let data = {{ df }}['type']#}
+        {#data["type"] = "{{ typegraph }}"#}
+    if ("{{ type }}" == "log_plot"){
+        var layout = {
+                  xaxis: {
+                    type: 'log',
+                    autorange: true
+                  },
+                  yaxis: {
+                    type: 'log',
+                    autorange: true
+                  }
+                };
+         Plotly.newPlot('plot', {{df|safe}}, layout);
+
+    }
+    else {
+         Plotly.newPlot('plot', {{df|safe}});
+
+    }
+
+    {#Plotly.newPlot('plot', {{ df|safe }});#}
+
+
+
+
+        {#if ("{{ typegraph }}" === 'scatter'){#}
+        {#    data['mode'] = 'lines+markers'#}
+        {#     Plotly.newPlot('plot', data);#}
+        {#}#}
+        {#else if ("{{ typegraph }}" === 'line'){#}
+        {#     data['mode'] = 'lines'#}
+        {##}
+        {#}#}
+        {#else if ("{{ type }}" === 'log_plot'){#}
+        {#     data['mode'] = 'lines'#}
+        {#    var layout = {#}
+        {#              xaxis: {#}
+        {#                type: 'log',#}
+        {#                autorange: true#}
+        {#              },#}
+        {#              yaxis: {#}
+        {#                type: 'log',#}
+        {#                autorange: true#}
+        {#              }#}
+        {#            };#}
+        {#     Plotly.newPlot('plot', data, layout);#}
+        {#}#}
+        {#else {#}
+        {#    Plotly.newPlot('plot', data);#}
+        {#}#}
+
+
+    </script>
+
+{{ df }}
+
+</body></html>
