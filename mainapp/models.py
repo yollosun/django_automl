@@ -3,6 +3,10 @@ from django.utils import timezone
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import User
 
+class GraphData(models.Model):
+    type = models.CharField(max_length=255)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    data = models.TextField()
 
 
 class File(models.Model):

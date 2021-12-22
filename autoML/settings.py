@@ -13,9 +13,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
@@ -116,6 +116,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('JWT',),
+'ACCESS_TOKEN_LIFETIME': timedelta(minutes=100)
 }
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 CORS_ALLOWED_ORIGINS = [

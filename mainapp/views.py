@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from autoML.settings import MEDIA_ROOT
 from rest_framework import status
 from pathlib import Path
-from .models import File
-from .serializers import FileSerializer
+from .models import File, GraphData
+from .serializers import FileSerializer, GraphDataSerializer
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.views.generic import ListView
@@ -56,6 +56,7 @@ class MyUploadView(APIView):
 
     def get(self, request, format=None):
         files = File.objects.filter(owner=request.user.id)
+
         serializer = FileSerializer(files, many=True)
         return Response(serializer.data)
 
@@ -103,16 +104,36 @@ class Graph(APIView):
             new_df['type'] = "scatter"
         elif graph_type == "log_plot":
             new_df['type'] = "scatter"
-        elif graph_type == "bar":
+        else:
             new_df['type'] = graph_type
-            new_df = [new_df]
-        return Response({'df': new_df, 'type': graph_type})
-    # def get(self, request):
-    #     # data =[ {'x': ['Apples', 'Oranges', 'Bananas'], 'y': [20,  14, 5],
-    #     #         'type': 'bar'}]
-    #     # graph_type = 'bar'
-    #     # return Response({'df': data, 'type': graph_type})
-    #     return Response({"nya": "nya"})
+        graph_details = {
+                'type': graph_type,
+                'owner': request.user.id,
+                'data': str(new_df),
+            }
+        serializer = GraphDataSerializer(data=graph_details)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(graph_details, status=201)
+        return JsonResponse(serializer.errors, status=400)
+
+    def get(self, request):
+        # graph = GraphData.objects.filter(owner=request.user.id)
+        graph = GraphData.objects.all()
+        serializer = GraphDataSerializer(graph, many=True)
+        data = serializer.data[-1]['data']
+        if serializer.data[-1]['type'] == "bar":
+            data = [eval(data)]
+        else:
+            data = eval(data)
+        graph_type = serializer.data[-1]['type']
+        return Response({'df': data, 'type': graph_type})
+        # # return Response({'data': serializer.data})
+        # data =[ {'x': ['Apples', 'Oranges', 'Bananas'], 'y': [20,  14, 5],
+        #         'type': 'bar'}]
+        # graph_type = 'bar'
+        # print(serializer.data[-1]['type'])
+        # return Response({'df': data, 'type': graph_type, "data": serializer})
 
 class GraphView(ListView):
     template_name = "list.html"
