@@ -1,0 +1,62 @@
+{#для проверки#}
+{% load static %}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+{#    <script src="{% static 'js/plotly-2.6.3.min.js' %}"></script>#}
+<script src="https://cdn.plot.ly/plotly-2.6.3.min.js">  </script>
+</head>
+<body>
+<div id="plot"></div>
+<div id="myDiv"></div>
+
+    <script>
+        if ("{{ type }}" == "log_plot"){
+        var layout = {
+                  xaxis: {
+                    type: 'log',
+                    autorange: true
+                  },
+                  yaxis: {
+                    type: 'log',
+                    autorange: true
+                  }
+                };
+         Plotly.newPlot('plot', {{df|safe}}, layout);
+
+    }
+    else {
+         Plotly.newPlot('plot', {{df|safe}});
+
+    }
+
+{#var trace3 = {#}
+{#  x: [1, 2, 3, 4],#}
+{#  y: [12, 9, 15, 12],#}
+{#  mode: 'lines+markers',#}
+{#  type: 'scatter'#}
+{#};#}
+{##}
+{#var data = trace3;#}
+{##}
+{#Plotly.newPlot('myDiv', data);#}
+{#        var data = [#}
+{#  {#}
+{#    x: ['giraffes', 'orangutans', 'monkeys'],#}
+{#    y: [20, 14, 23],#}
+{#    type: 'bar'#}
+{#  }#}
+{#];#}
+{##}
+{#Plotly.newPlot('myDiv', data);#}
+
+
+
+
+    </script>
+
+{{ df }}
+
+</body></html>>

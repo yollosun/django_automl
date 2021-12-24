@@ -19,6 +19,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.views.generic import ListView
 import json
+from .modellearn import *
 
 class MyUploadView(APIView):
     parser_class = (FileUploadParser,)
@@ -75,8 +76,8 @@ class Graph(APIView):
     # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
     renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'list.html'
-
+    # template_name = 'list.html'
+    template_name = 'list2.html'
     def post(self, request, format=None):
         print(request)
         # file = request.data['name'][:request.data['name'].find('.')]
@@ -118,16 +119,19 @@ class Graph(APIView):
         return JsonResponse(serializer.errors, status=400)
 
     def get(self, request):
-        # graph = GraphData.objects.filter(owner=request.user.id)
+        graph = GraphData.objects.filter(owner=request.user.id)
         graph = GraphData.objects.all()
         serializer = GraphDataSerializer(graph, many=True)
         data = serializer.data[-1]['data']
-        if serializer.data[-1]['type'] == "bar":
-            data = [eval(data)]
-        else:
-            data = eval(data)
+        data = [eval(data)]
         graph_type = serializer.data[-1]['type']
+
         return Response({'df': data, 'type': graph_type})
+        # data = {'x': [1, 2, 3, 4],
+        #         'y': [10, 15, 13, 17],
+        #         'mode': 'markers',
+        #         'type': 'scatter'}
+        # graph_type = 'scatter'
         # # return Response({'data': serializer.data})
         # data =[ {'x': ['Apples', 'Oranges', 'Bananas'], 'y': [20,  14, 5],
         #         'type': 'bar'}]
@@ -139,6 +143,23 @@ class GraphView(ListView):
     template_name = "list.html"
     model = File
     queryset = File.objects.all()
+
+class CreateDateModel(APIView):
+    def post(self, request, format=None):
+        print("im here")
+        name_of_file = request.data['name']
+        id = request.user.id
+        path_to_file = os.path.join(MEDIA_ROOT, str(id), name_of_file)
+        print(path_to_file)
+
+        target_variable = request.data['target_variable']
+        resp = main_function(path_to_file, target_variable)
+        # data = {
+        #     'name': request.data['name'],
+        #     'owner': id
+        # }
+        return Response([resp])
+
 
 
 # def dashi(df, x, y, typeOfGraph, list=0):
