@@ -1,8 +1,10 @@
 import os
 
 from django.shortcuts import render, redirect
-
+import pickle
 import pandas as pd
+
+from django.shortcuts import HttpResponse
 from rest_framework.renderers import TemplateHTMLRenderer
 from django.http import QueryDict, JsonResponse
 from rest_framework.exceptions import ParseError
@@ -13,8 +15,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from autoML.settings import MEDIA_ROOT
 from rest_framework import status
 from pathlib import Path
-from .models import File, GraphData
-from .serializers import FileSerializer, GraphDataSerializer
+from .models import File, GraphData, DataModel
+from .serializers import FileSerializer, GraphDataSerializer, DataModelSerializer
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.views.generic import ListView
@@ -46,13 +48,14 @@ class MyUploadView(APIView):
             'path': dir,
             'published_date': timezone.now()
         }
-        print(file_details)
-        columns = df.columns
-
+        #
+        # print(file_details)
+        # columns = df.columns
         serializer = FileSerializer(data=file_details)
         if serializer.is_valid():
             serializer.save()
-            return Response(columns, status=201)
+            # return Response(columns, status=201)
+            return Response("File uploaded")
         return JsonResponse(serializer.errors, status=400)
 
     def get(self, request, format=None):
@@ -67,7 +70,7 @@ class ShowFileColumns(APIView):
     def post(self, request, format=None):
         files = File.objects.filter(owner=request.user.id, name=request.data['name'])
         serializer = FileSerializer(files, many=True)
-        df = pd.read_csv(serializer.data[-1]["path"] + "\{file}".format(file=request.data['name']))
+        df = pd.read_csv(serializer.data[-1]["path"] + "\{file}".format(file=request.data['name']), nrows=1)
 
         return Response(df.columns)
 
@@ -144,23 +147,57 @@ class GraphView(ListView):
     model = File
     queryset = File.objects.all()
 
-class CreateDateModel(APIView):
+class CreateDataModel(APIView):
     def post(self, request, format=None):
-        print("im here")
         name_of_file = request.data['name']
         id = request.user.id
         path_to_file = os.path.join(MEDIA_ROOT, str(id), name_of_file)
         print(path_to_file)
 
         target_variable = request.data['target_variable']
-        resp = main_function(path_to_file, target_variable)
-        # data = {
-        #     'name': request.data['name'],
-        #     'owner': id
-        # }
-        return Response([resp])
+        model, model_score = main_function(path_to_file, target_variable)
+        dir = "picklemodels"
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        pkl_filename = f"{id}/picklemodels/{name_of_file[:len(name_of_file)-4]}_model.pkl"
+        with open(pkl_filename, 'wb') as file:
+            pickle.dump(model, file)
 
+        data = {
+            'name': request.data['name'],
+            'owner': id,
+            'path': f"{id}/picklemodels/{name_of_file[:len(name_of_file)-4]}_model.pkl",
+            'target_variable': request.data['target_variable']
+        }
+        serializer = DataModelSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"model_score": model_score})
+        return JsonResponse(serializer.errors, status=400)
+    def get(self, request):
+        files = DataModel.objects.filter(owner=request.user.id)
+        serializer = DataModelSerializer(files, many=True)
+        return Response(serializer.data)
 
+class ReturnModel(APIView):
+    def post(self, request, format=None):
+        files = DataModel.objects.filter(owner=request.user.id, name=request.data['name'])
+        serializer = DataModelSerializer(files, many=True)
+        path = serializer.data[-1]['path']
+        with open(path, 'rb') as file:
+            pickle_model = pickle.load(file)
+        pickle_model = pickle_model[0]
+        X = request.data['file']
+        try:
+            X = pd.read_csv(X)
+        except:
+            X = pd.read_excel(X)
+        Ypredict = pickle_model.predict(X)
+        data = pd.Series(Ypredict)
+        X[serializer.data[-1]['target_variable']] = data
+        geeks_object = X.to_html()
+
+        return HttpResponse(geeks_object)
 
 # def dashi(df, x, y, typeOfGraph, list=0):
 #     print("Первая проверка")

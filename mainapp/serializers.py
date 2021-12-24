@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import File, GraphData
+from .models import File, GraphData, DataModel
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -13,7 +13,10 @@ class GraphDataSerializer(serializers.ModelSerializer):
         model = GraphData
         fields = "__all__"
 
-
+class DataModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DataModel
+        fields = "__all__"
 # class ProfileSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Profile

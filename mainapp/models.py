@@ -37,4 +37,6 @@ class DataModel(models.Model):
     name = models.CharField(max_length=255)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     path = models.TextField(default="empty")
+    target_variable = models.TextField(default="empty")
+#path путь до модельки
 
