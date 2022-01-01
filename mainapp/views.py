@@ -156,17 +156,17 @@ class CreateDataModel(APIView):
 
         target_variable = request.data['target_variable']
         model, model_score = main_function(path_to_file, target_variable)
-        dir = "picklemodels"
+        dir = os.path.join(MEDIA_ROOT, str(id), "picklemodels")
         if not os.path.exists(dir):
             os.mkdir(dir)
-        pkl_filename = f"{id}/picklemodels/{name_of_file[:len(name_of_file)-4]}_model.pkl"
+        pkl_filename = os.path.join(MEDIA_ROOT, str(id),"picklemodels", f"{name_of_file[:len(name_of_file)-4]}_model.pkl")
         with open(pkl_filename, 'wb') as file:
             pickle.dump(model, file)
 
         data = {
-            'name': request.data['name'],
+            'name': f"{name_of_file[:len(name_of_file)-4]}_model.pkl",
             'owner': id,
-            'path': f"{id}/picklemodels/{name_of_file[:len(name_of_file)-4]}_model.pkl",
+            'path': os.path.join(MEDIA_ROOT, str(id),"picklemodels", f"{name_of_file[:len(name_of_file)-4]}_model.pkl"),
             'target_variable': request.data['target_variable']
         }
         serializer = DataModelSerializer(data=data)
@@ -184,18 +184,23 @@ class ReturnModel(APIView):
         files = DataModel.objects.filter(owner=request.user.id, name=request.data['name'])
         serializer = DataModelSerializer(files, many=True)
         path = serializer.data[-1]['path']
+        print(path)
         with open(path, 'rb') as file:
             pickle_model = pickle.load(file)
         pickle_model = pickle_model[0]
-        X = request.data['file']
+        x = request.data['file']
         try:
-            X = pd.read_csv(X)
+            df = pd.read_csv(x)
         except:
-            X = pd.read_excel(X)
-        Ypredict = pickle_model.predict(X)
+            df = pd.read_excel(x)
+        X_test = fill_nan(df, df)
+        X_test = categorical_processing(df)
+        print("hgyftdrftgyhjkl")
+        Ypredict = pickle_model.predict(X_test)
+        print("here")
         data = pd.Series(Ypredict)
-        X[serializer.data[-1]['target_variable']] = data
-        geeks_object = X.to_html()
+        df[serializer.data[-1]['target_variable']] = data
+        geeks_object = df.to_html()
 
         return HttpResponse(geeks_object)
 
